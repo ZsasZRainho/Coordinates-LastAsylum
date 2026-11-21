@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d1117">
+<title>Coordinate Generator for Last Asylum Plague</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #0d1117;
+  --card: #161b22;
+  --green: #c026d3;
+  --line: #303943;
+  --text: #e6edf3;
+  --muted: #9da7b3;
+  --field: #0d1117;
+  --button: #30213a;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 16px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+}
+main { max-width: 850px; margin: auto; }
+.card {
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 18px;
+}
+h1, h2 {
+  font-family: Impact, sans-serif;
+  font-weight: normal;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+h1 { font-size: 29px; }
+h2 { font-size: 23px; }
+label {
+  display: block;
+  margin: 12px 0 6px;
+  color: var(--muted);
+  font-weight: bold;
+}
+input, textarea, select {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  background: var(--field);
+  color: var(--text);
+  font-size: 16px;
+}
+button {
+  padding: 11px 15px;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  background: var(--button);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 3px;
+}
+button.primary {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+}
+button.active { outline: 2px solid var(--green); }
+button:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid #e879f9;
+  outline-offset: 2px;
+}
+.row, .toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+.row > * { flex: 1; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+}
+.line {
+  background: #211729;
+  border: 2px solid var(--line);
+  border-radius: 13px;
+  padding: 15px;
+  margin: 15px 0;
+}
+.line-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.line-header strong { margin-right: auto; }
+.colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: 10px 0;
+}
+.swatch {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid #65717e;
+}
+.swatch.selected { outline: 3px solid #e6edf3; }
+.preview {
+  background: #111c29;
+  border: 3px solid #743b79;
+  border-radius: 14px;
+  overflow: hidden;
+}
+.preview-title {
+  background: linear-gradient(110deg, #7e22ce, #c026d3, #e11d48);
+  color: #eaf2fb;
+  padding: 12px;
+  font-size: 20px;
+  font-weight: bold;
+}
+.preview-content {
+  padding: 18px;
+  color: #f0abfc;
+  min-height: 75px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.counter {
+  font-family: monospace;
+  font-size: 23px;
+  font-weight: bold;
+  margin: 18px 0 8px;
+}
+.progress {
+  height: 13px;
+  background: #39243f;
+  border-radius: 20px;
+  overflow: hidden;
+}
+.progress div {
+  height: 100%;
+  background: var(--green);
+  width: 0;
+}
+.small { font-size: 13px; color: var(--muted); }
+textarea { min-height: 150px; font-family: monospace; }
+@media(max-width:520px) {
+  .grid { grid-template-columns: repeat(2, 1fr); }
+  .card { padding: 15px; }
+  body { padding: 9px; }
+}
+</style>
+</head>
+<body>
+<main>
+<section class="card">
+<h1>Quick Add</h1>
+<label for="server">Server (1–440)</label>
+<input id="server" type="number" min="1" max="440" value="341">
+<div class="toolbar" style="margin-top:12px">
+<button class="primary" data-preset="city">Royal City</button>
+<button data-preset="towers">4 Towers</button>
+<button data-preset="house">Any House</button>
+<button data-preset="text">Text</button>
+</div>
+<p class="small">Royal City: 500:500. Towers: 491 and 509.</p>
+</section>
+
+<section class="card">
+<div class="row">
+<h1>Lines</h1>
+<button id="clear" type="button">Clear All</button>
+<button id="add" type="button">+ New Line</button>
+</div>
+<div id="lines"></div>
+</section>
+
+<section class="card">
+<h1>In-Game Preview</h1>
+<div class="preview">
+<div class="preview-title">Alliance Announcement</div>
+<div class="preview-content" id="preview"></div>
+</div>
+<div class="counter"><span id="count">0</span> / 1000</div>
+<div class="progress"><div id="progress"></div></div>
+<label for="output">Generated Code</label>
+<textarea id="output" readonly></textarea>
+<button class="primary" id="copy" type="button">COPY CODE</button>
+<p class="small" id="status">Ready to copy.</p>
+</section>
+
+<section class="card">
+<h1>Server List</h1>
+<div class="grid">
+<div>
+<label for="first">First Server</label>
+<input id="first" type="number" min="1" max="440" value="1">
+</div>
+<div>
+<label for="last">Last Server</label>
+<input id="last" type="number" min="1" max="440" value="440">
+</div>
+</div>
+<button id="addRange" type="button">Add Servers</button>
+<button id="copyRange" type="button">Copy List</button>
+</section>
+</main>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+const MIN_SERVER = 1;
+const MAX_SERVER = 440;
+let lines = [];
+let nextId = 1;
+
+const palette = [
+   "#FFFFFF","#D946EF","#FF4D6D","#FF8A3D",
+  "#FFD166","#A855F7","#F472B6","#FB7185",
+  "#C084FC","#F9A8D4","#B45309","#A1A1AA",
+  "#000000"
+];
+const gradients = [
+  "none","sunset","blueviolet",
+  "greencyan","fire","pink"
+];
+
+function validServer(value) {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= MIN_SERVER && n <= MAX_SERVER;
+}
+
+function addLine(server=341, x=500, y=500, type="link", shouldRender=true) {
+  if (!validServer(server)) {
+    alert("Server must be between 1 and 440.");
+    return;
+  }
+  lines.push({
+    id: nextId++,
+    server: String(server),
+    x: String(x),
+    y: String(y),
+    legend: "",
+    type,
+    bold: false,
+    italic: false,
+    underline: true,
+    brackets: true,
+    big: false,
+    color: "#D946EF",
+    gradient: "none"
+  });
+  if (shouldRender) render();
+}
+
+function preset(type) {
+  const rawServer = $("server").value;
+  if (!validServer(rawServer)) {
+    alert("Enter a server number between 1 and 440.");
+    $("server").focus();
+    return;
+  }
+  const s = Number(rawServer);
+  if (type === "city") addLine(s, 500, 500);
+  if (type === "towers") {
+    [[491,491],[491,509],[509,491],[509,509]]
+      .forEach(([x,y]) => addLine(s, x, y, "link", false));
+    render();
+  }
+  if (type === "house") addLine(s, 500, 500);
+  if (type === "text") addLine(s, 500, 500, "text");
+}
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"]/g, c => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;"
+  })[c]);
+}
+
+function generate(line) {
+  let content = line.type === "text"
+    ? line.legend
+    : `#: ${line.server} X:${line.x} Y:${line.y}`;
+  content = escapeHTML(content);
+  if (line.type === "link") {
+    content =
+      `<link=${line.x}&${line.y}&${line.server}>` +
+      content +
+      `</link>`;
+  }
+  if (line.big) content = `<size=large>${content}</size>`;
+  if (line.bold) content = `<b>${content}</b>`;
+  if (line.italic) content = `<i>${content}</i>`;
+  if (line.underline) content = `<u>${content}</u>`;
+  if (line.brackets) content = `[${content}]`;
+  if (line.gradient !== "none") {
+    content = `<gradient=${line.gradient}>${content}</gradient>`;
+  } else if (line.color !== "#FFFFFF") {
+    content = `<color=${line.color}>${content}</color>`;
+  }
+  return content;
+}
+
+function render() {
+  const container = $("lines");
+  container.innerHTML = lines.map((l,i) => `
+    <div class="line" data-id="${l.id}">
+      <div class="line-header">
+        <strong>LINE ${i+1}</strong>
+        <button type="button" data-action="up">↑</button>
+        <button type="button" data-action="down">↓</button>
+        <button type="button" data-action="copyLine">Copy</button>
+        <button type="button" data-action="delete">Delete</button>
+      </div>
+      ${l.type === "link" ? `
+      <div class="grid">
+        <div>
+          <label>Server</label>
+          <input data-field="server" type="number" min="1" max="440" value="${escapeHTML(l.server)}">
+        </div>
+        <div>
+          <label>X</label>
+          <input data-field="x" type="number" value="${escapeHTML(l.x)}">
+        </div>
+        <div>
+          <label>Y</label>
+          <input data-field="y" type="number" value="${escapeHTML(l.y)}">
+        </div>
+      </div>
+      ` : ""}
+      <label>Label</label>
+      <input data-field="legend" value="${escapeHTML(l.legend)}" placeholder="Optional label">
+      <label>Formatting</label>
+      <div class="toolbar">
+        <button type="button" data-toggle="bold" class="${l.bold?'active':''}">N</button>
+        <button type="button" data-toggle="italic" class="${l.italic?'active':''}"><i>I</i></button>
+        <button type="button" data-toggle="underline" class="${l.underline?'active':''}"><u>U</u></button>
+        <button type="button" data-toggle="brackets" class="${l.brackets?'active':''}">[ ]</button>
+        <button type="button" data-toggle="big" class="${l.big?'active':''}">Grande</button>
+      </div>
+      <label>Color</label>
+      <div class="colors">
+        ${palette.map(c => `
+          <button type="button" class="swatch ${l.color===c?'selected':''}"
+            style="background:${c}" data-color="${c}" aria-label="Color ${c}"></button>
+        `).join("")}
+      </div>
+      <label>Gradient</label>
+      <div class="toolbar">
+        ${gradients.map(g => `
+          <button type="button" data-gradient="${g}" class="${l.gradient===g?'active':''}">
+            ${g==="none"?"None":g}
+          </button>
+        `).join("")}
+      </div>
+      <p class="small">Code: ${generate(l).length} characters</p>
+    </div>
+  `).join("");
+
+  const code = lines.map(generate).join("\n");
+  $("output").value = code;
+  $("count").textContent = code.length;
+  $("progress").style.width = Math.min(100, code.length/10) + "%";
+  $("progress").style.background = code.length > 1000 ? "#fb7185" : "var(--green)";
+  $("preview").textContent = lines.map(l =>
+    l.type === "text"
+      ? l.legend
+      : `[#:${l.server} X:${l.x} Y:${l.y}]`
+  ).join("\n");
+}
+
+function moveLine(id, direction) {
+  const i = lines.findIndex(l => l.id === id);
+  const j = i + direction;
+  if (j < 0 || j >= lines.length) return;
+  [lines[i], lines[j]] = [lines[j], lines[i]];
+  render();
+}
+
+async function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const area = document.createElement("textarea");
+  area.value = text;
+  area.style.position = "fixed";
+  area.style.opacity = "0";
+  document.body.appendChild(area);
+  area.select();
+  const success = document.execCommand("copy");
+  area.remove();
+  if (!success) throw new Error("Falha ao copiar");
+}
+
+$("lines").addEventListener("input", event => {
+  const box = event.target.closest("[data-id]");
+  const field = event.target.dataset.field;
+  if (!box || !field) return;
+  const line = lines.find(l => l.id === Number(box.dataset.id));
+  if (!line) return;
+  line[field] = event.target.value;
+  $("output").value = lines.map(generate).join("\n");
+  $("count").textContent = $("output").value.length;
+  $("progress").style.width = Math.min(100, $("output").value.length/10) + "%";
+});
+
+$("lines").addEventListener("change", event => {
+  const box = event.target.closest("[data-id]");
+  const field = event.target.dataset.field;
+  if (!box || !field) return;
+  const line = lines.find(l => l.id === Number(box.dataset.id));
+  if (!line) return;
+  if (field === "server" && !validServer(event.target.value)) {
+    alert("Server must be between 1 and 440.");
+    event.target.value = line.server;
+    return;
+  }
+  line[field] = event.target.value;
+  render();
+});
+
+$("lines").addEventListener("click", event => {
+  const box = event.target.closest("[data-id]");
+  if (!box) return;
+  const line = lines.find(l => l.id === Number(box.dataset.id));
+  if (!line) return;
+  const action = event.target.dataset.action;
+  const toggle = event.target.dataset.toggle;
+  const color = event.target.dataset.color;
+  const gradient = event.target.dataset.gradient;
+
+  if (action === "delete") {
+    lines = lines.filter(l => l.id !== line.id);
+    render();
+    return;
+  }
+  if (action === "up") { moveLine(line.id, -1); return; }
+  if (action === "down") { moveLine(line.id, 1); return; }
+  if (action === "copyLine") {
+    copyText(generate(line))
+      .then(() => $("status").textContent = "Line copied!")
+      .catch(() => $("status").textContent = "Copy failed.");
+    return;
+  }
+  if (toggle) line[toggle] = !line[toggle];
+  if (color) {
+    line.color = color;
+    line.gradient = "none";
+  }
+  if (gradient !== undefined) line.gradient = gradient;
+  render();
+});
+
+document.querySelectorAll("[data-preset]").forEach(button => {
+  button.addEventListener("click", () => preset(button.dataset.preset));
+});
+
+$("add").addEventListener("click", () => addLine());
+$("clear").addEventListener("click", () => {
+  lines = [];
+  render();
+});
+$("copy").addEventListener("click", () => {
+  copyText($("output").value)
+    .then(() => $("status").textContent = "Code copied!")
+    .catch(() => $("status").textContent = "Could not copy.");
+});
+
+function getServerRange() {
+  const first = Number($("first").value);
+  const last = Number($("last").value);
+  if (!validServer(first) || !validServer(last) || last < first) {
+    alert("Enter a valid range between servers 1 and 440.");
+    return null;
+  }
+  return { first, last };
+}
+
+$("addRange").addEventListener("click", () => {
+  const range = getServerRange();
+  if (!range) return;
+  for (let s = range.first; s <= range.last; s++) {
+    addLine(s, 500, 500, "link", false);
+  }
+  render();
+});
+
+$("copyRange").addEventListener("click", () => {
+  const range = getServerRange();
+  if (!range) return;
+  const list = Array.from(
+    { length: range.last - range.first + 1 },
+    (_, i) => range.first + i
+  ).join(", ");
+  copyText(list)
+    .then(() => $("status").textContent = "List copied!")
+    .catch(() => $("status").textContent = list);
+});
+
+addLine();
+</script>
+</body>
+</html>
